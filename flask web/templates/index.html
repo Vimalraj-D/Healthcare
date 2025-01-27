@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI HEALTHCARE KIOSK</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/med1.png') }}" type="image/png">
+    <style>
+        :root {
+            --primary-blue: #1a237e;
+            --secondary-blue: #3949ab;
+            --primary-red: #c62828;
+            --secondary-red: #e53935;
+            --light-blue: #bbdefb;
+            --light-red: #ffcdd2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--light-blue), var(--light-red));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-blue);
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            position: relative;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary-blue), var(--primary-red));
+            border-radius: 2px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--primary-blue);
+            font-weight: 500;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--light-blue);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--secondary-blue);
+            box-shadow: 0 0 0 3px rgba(57, 73, 171, 0.1);
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, var(--primary-blue), var(--primary-red));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-container {
+            display: none;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--light-blue), var(--light-red));
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .risk-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .nutrition-plan {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .meal-section {
+            margin: 1rem 0;
+        }
+
+        .meal-section h4 {
+            color: var(--primary-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .meal-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .meal-item {
+            background: var(--light-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--light-blue);
+            border-top: 5px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dis{
+            color:red;
+            background-color: white;
+            border: none;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .dis p{
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bolder;
+        }
+
+    .chatbot-button {
+      position: fixed;
+      width:70px;
+      height:70px;
+      bottom: 50px;
+      right: 50px;
+      padding: 15px;
+      background-color: white;
+      color: black;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .chatbot-button:hover {
+      background-color: lightblue;
+    }
+
+    .img1{
+        width: 60px;
+        height: auto;
+    }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Health Prediction System</h1>
+        
+        <form id="healthForm">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" required min="1" max="120">
+                </div>
+                
+                <div class="input-group">
+                    <label for="bp">Blood Pressure (mmHg)</label>
+                    <input type="number" id="bp" name="bp" required min="70" max="200">
+                </div>
+                
+                <div class="input-group">
+                    <label for="oxygen">Oxygen Level (%)</label>
+                    <input type="number" id="oxygen" name="oxygen" required min="70" max="100">
+                </div>
+                
+                <div class="input-group">
+                    <label for="pulse">Pulse Rate (bpm)</label>
+                    <input type="number" id="pulse" name="pulse" required min="40" max="200">
+                </div>
+                
+                <div class="input-group">
+                    <label for="sugar">Sugar Status</label>
+                    <select id="sugar" name="sugar" required>
+                        <option value="0">Normal</option>
+                        <option value="-1">Low</option>
+                        <option value="1">High</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="weight">Weight (kg)</label>
+                    <input type="number" id="weight" name="weight" required min="20" max="200">
+                </div>
+                
+                <div class="input-group">
+                    <label for="height">Height (cm)</label>
+                    <input type="number" id="height" name="height" required min="100" max="250">
+                </div>
+                
+                <div class="input-group">
+                    <label for="diet">Diet Preference</label>
+                    <select id="diet" name="diet" required>
+                        <option value="vegetarian">Vegetarian</option>
+                        <option value="non_vegetarian">Non-Vegetarian</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="dis">
+                <p>In Realtime AI automaticaly feed the information about the patient.</p>
+                <p>These inputs are for Understanding purpose only.</p>
+            </div>
+
+            <button type="submit" class="submit-btn">Predict Health Status</button>
+        </form>
+
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Analyzing your health data...</p>
+        </div>
+
+        <div class="result-container">
+            <div class="result-header">
+                <div class="risk-indicator"></div>
+                <h3>Health Risk Assessment</h3>
+            </div>
+            <div id="riskLevel"></div>
+            <div class="nutrition-plan">
+                <h3>Personalized Nutrition Plan</h3>
+                <div id="nutritionDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('healthForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loading = document.querySelector('.loading');
+            const resultContainer = document.querySelector('.result-container');
+            
+            // Show loading
+            loading.style.display = 'block';
+            resultContainer.style.display = 'none';
+            
+            // Simulate API call (replace with actual API call)
+            setTimeout(() => {
+                loading.style.display = 'none';
+                resultContainer.style.display = 'block';
+                
+                // Simulate response (replace with actual API response handling)
+                const mockRisk = Math.random();
+                let riskLevel, riskColor;
+                
+                if (mockRisk < 0.33) {
+                    riskLevel = 'Low Risk';
+                    riskColor = '#4CAF50';
+                } else if (mockRisk < 0.66) {
+                    riskLevel = 'Medium Risk';
+                    riskColor = '#FFC107';
+                } else {
+                    riskLevel = 'High Risk';
+                    riskColor = '#F44336';
+                }
+                
+                document.querySelector('.risk-indicator').style.backgroundColor = riskColor;
+                document.getElementById('riskLevel').innerHTML = `
+                    <h4 style="color: ${riskColor}">${riskLevel}</h4>
+                    <p>Based on your health parameters, we've analyzed your current health status.</p>
+                `;
+                
+                // Display nutrition plan
+                document.getElementById('nutritionDetails').innerHTML = `
+                    <div class="meal-section">
+                        <h4>Breakfast</h4>
+                        <div class="meal-items">
+                            <span class="meal-item">Oatmeal with fruits</span>
+                            <span class="meal-item">Whole grain toast</span>
+                        </div>
+                    </div>
+                    <div class="meal-section">
+                        <h4>Lunch</h4>
+                        <div class="meal-items">
+                            <span class="meal-item">Quinoa bowl</span>
+                            <span class="meal-item">Grilled vegetables</span>
+                        </div>
+                    </div>
+                    <div class="meal-section">
+                        <h4>Dinner</h4>
+                        <div class="meal-items">
+                            <span class="meal-item">Lentil soup</span>
+                            <span class="meal-item">Brown rice</span>
+                        </div>
+                    </div>
+                `;
+            }, 2000);
+        });
+    </script>
+     <button class="chatbot-button" title="AI Medical Chatbot">
+        <img src="{{ url_for('static', filename='images/icon1.png') }}" class="img1">
+      </button>
+</body>
+</html>
